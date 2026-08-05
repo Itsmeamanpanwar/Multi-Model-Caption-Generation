@@ -1,0 +1,14 @@
+venv/
+features.pkl
+__pycache__/
+*.pyc
+.DS_Store
+flickr8k/
+~$*.doc
+*.pptx
+*.doc
+Screenshot*.png
+graph_1.png
+graph_2.png
+Model_Architecture_*.png
+FinalBLEUScoresForBeamWidths1,3and5.png

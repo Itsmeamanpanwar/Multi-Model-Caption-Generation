@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Caption Generator</title>
+<style>
+  :root {
+    --ink: #16213d;
+    --muted: #5a6b7b;
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --line: #e1e8ee;
+    --teal: #1c7293;
+    --amber: #d98c2b;
+    --amber-bg: #fdf1e0;
+    --error: #b3261e;
+    --error-bg: #fbeceb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 2rem;
+  }
+  .eyebrow {
+    font-family: "Courier New", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin: 0 0 0.4rem;
+  }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.6rem;
+    margin: 0 0 0.3rem;
+    font-weight: 600;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0 0 1.6rem;
+    line-height: 1.5;
+  }
+  #dropzone {
+    border: 1.5px dashed var(--line);
+    border-radius: 10px;
+    padding: 2.2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  #dropzone:hover, #dropzone.drag {
+    border-color: var(--teal);
+    background: #f0f7fa;
+  }
+  #dropzone .hint {
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  #dropzone .hint strong { color: var(--teal); }
+  #preview-wrap { display: none; }
+  #preview-wrap img {
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+  }
+  .scanline {
+    position: absolute;
+    left: 0; right: 0; height: 2px;
+    background: var(--amber);
+    opacity: 0;
+    box-shadow: 0 0 8px var(--amber);
+  }
+  .scanline.active {
+    animation: scan 1.4s linear infinite;
+    opacity: 0.85;
+  }
+  @keyframes scan {
+    0% { top: 0%; }
+    100% { top: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scanline.active { animation: none; opacity: 0.4; top: 50%; }
+  }
+  input[type=file] { display: none; }
+  button#go {
+    width: 100%;
+    margin-top: 1.2rem;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  button#go:disabled { opacity: 0.45; cursor: not-allowed; }
+  button#go:not(:disabled):hover { opacity: 0.88; }
+  #result {
+    margin-top: 1.2rem;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    display: none;
+    line-height: 1.5;
+  }
+  #result.ok {
+    background: var(--amber-bg);
+    border: 1px solid #f0d6a8;
+    display: block;
+  }
+  #result.err {
+    background: var(--error-bg);
+    border: 1px solid #eec6c3;
+    color: var(--error);
+    display: block;
+  }
+  #result .label {
+    font-family: "Courier New", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  #result.err .label { color: var(--error); }
+  #result .caption {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 1.05rem;
+  }
+  .server-note {
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .server-note code {
+    background: #eef2f5;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <p class="eyebrow">Vision &rarr; language</p>
+  <h1>Image caption generator</h1>
+  <p class="sub">Upload a photo. A MobileNetV2 + LSTM model (beam search, k=5) will describe what's in it.</p>
+
+  <div id="dropzone">
+    <div class="scanline" id="scanline"></div>
+    <div id="prompt-state">
+      <div class="hint"><strong>Click to upload</strong> or drag an image here</div>
+    </div>
+    <div id="preview-wrap">
+      <img id="preview" src="" alt="Selected image preview">
+    </div>
+    <input type="file" id="file-input" accept="image/*">
+  </div>
+
+  <button id="go" disabled>Generate caption</button>
+
+  <div id="result"></div>
+
+  <p class="server-note">Expects the Flask API running at <code>http://localhost:5000</code>. Start it with <code>python app.py</code>.</p>
+</div>
+
+<script>
+const API_URL = 'http://localhost:5000/predict';
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const promptState = document.getElementById('prompt-state');
+const previewWrap = document.getElementById('preview-wrap');
+const previewImg = document.getElementById('preview');
+const goBtn = document.getElementById('go');
+const resultBox = document.getElementById('result');
+const scanline = document.getElementById('scanline');
+
+let selectedFile = null;
+
+dropzone.addEventListener('click', () => fileInput.click());
+
+['dragenter', 'dragover'].forEach(evt =>
+  dropzone.addEventListener(evt, e => {
+    e.preventDefault();
+    dropzone.classList.add('drag');
+  })
+);
+['dragleave', 'drop'].forEach(evt =>
+  dropzone.addEventListener(evt, e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+  })
+);
+dropzone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImg.src = e.target.result;
+    promptState.style.display = 'none';
+    previewWrap.style.display = 'block';
+    goBtn.disabled = false;
+    resultBox.className = '';
+    resultBox.innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+goBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+  goBtn.disabled = true;
+  goBtn.textContent = 'Generating…';
+  scanline.classList.add('active');
+  resultBox.className = '';
+  resultBox.innerHTML = '';
+
+  const formData = new FormData();
+  formData.append('image', selectedFile);
+
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Something went wrong on the server.');
+
+    resultBox.className = 'ok';
+    resultBox.innerHTML = `<span class="label">Generated caption</span><span class="caption">"${data.caption}"</span>`;
+  } catch (err) {
+    resultBox.className = 'err';
+    resultBox.innerHTML = `<span class="label">Request failed</span><span class="caption">${err.message}. Is the Flask server running on port 5000?</span>`;
+  } finally {
+    scanline.classList.remove('active');
+    goBtn.disabled = false;
+    goBtn.textContent = 'Generate caption';
+  }
+});
+</script>
+
+</body>
+</html>
