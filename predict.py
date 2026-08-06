@@ -19,11 +19,12 @@ def load_tokenizer(path='tokenizer.json'):
         data = json.load(f)
         return tokenizer_from_json(data)
 
+print("Loading MobileNetV2 feature extractor...")
+_mobilenet_base = MobileNetV2(weights='imagenet')
+FEATURE_EXTRACTOR = Model(inputs=_mobilenet_base.inputs, outputs=_mobilenet_base.layers[-2].output)
+print("MobileNetV2 feature extractor loaded.")
+
 def extract_features(filename):
-    model = MobileNetV2(weights='imagenet')
-    # Remove the classification layer
-    model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
-    
     # Load and process image
     image = load_img(filename, target_size=IMAGE_SIZE)
     image = img_to_array(image)
@@ -31,7 +32,7 @@ def extract_features(filename):
     image = preprocess_input(image)
     
     # Get features (1, 1280)
-    feature = model.predict(image, verbose=0)
+    feature = FEATURE_EXTRACTOR.predict(image, verbose=0)
     return feature
 
 def word_for_id(integer, tokenizer):
