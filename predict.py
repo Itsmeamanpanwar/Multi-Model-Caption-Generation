@@ -9,7 +9,7 @@ from tensorflow.keras.preprocessing.text import tokenizer_from_json
 import os
 
 # --- CONFIGURATION ---
-BEAM_WIDTH = 5        # Higher = more accurate but slower (3, 5, 7 are good)
+BEAM_WIDTH = 1        # Higher = more accurate but slower (3, 5, 7 are good)
 ALPHA = 0.7           # Length normalization factor (0.6 to 0.7 is standard)
 MAX_LENGTH = 40       # Must match your training max_length
 IMAGE_SIZE = (224, 224)
