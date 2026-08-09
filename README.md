@@ -20,4 +20,3 @@ Our model achieves a BLEU-4 score of 0.1631. While heavier state-of-the-art mode
 they utilize encoders with ~24 million parameters. In contrast, our MobileNetV2 encoder utilizes only 3.5 million parameters, making it approximately 85% lighter. 
 This result demonstrates that our approach successfully generates intelligible captions while remaining lightweight enough for potential deployment on mobile or edge devices.
 
-Built by : Vidhi Upadhyay and Aditya Jugran 
