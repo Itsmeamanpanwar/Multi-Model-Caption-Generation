@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Multimodal Caption Generator</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- HEADER -->
+
+        <header>
+
+            <h1>Multimodal Caption Generator</h1>
+
+            <p class="subtitle">
+                Generate captions from images and audio using AI
+            </p>
+
+        </header>
+
+
+        <!-- UPLOAD SECTIONS -->
+
+        <div class="upload-grid">
+
+            <!-- IMAGE -->
+
+            <div class="upload-box">
+
+                <h2>Image Captioning</h2>
+
+                <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/*"
+                >
+
+                <button onclick="generateCaption()">
+                    Generate Image Caption
+                </button>
+
+            </div>
+
+
+            <!-- AUDIO -->
+
+            <div class="upload-box">
+
+                <h2> Audio Captioning</h2>
+
+                <input
+                    type="file"
+                    id="audioInput"
+                    accept="audio/*"
+                >
+
+                <button onclick="generateAudioCaption()">
+                    Generate Audio Caption
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- IMAGE PREVIEW -->
+
+        <div id="preview"></div>
+
+
+        <!-- RESULT -->
+
+        <div id="result">
+
+            <h2>Generated Caption</h2>
+
+            <p id="caption">
+                Your caption will appear here...
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+</html>

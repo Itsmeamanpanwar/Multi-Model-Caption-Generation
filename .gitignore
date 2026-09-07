@@ -1,0 +1,23 @@
+# Virtual environments
+venv/
+audio_venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Generated outputs
+outputs/
+
+# Local test data
+data/images/*
+data/audio/*
+
+# Environment files
+.env
+
+# Hugging Face / model cache
+.cache/
